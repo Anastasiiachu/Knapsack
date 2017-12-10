@@ -3,7 +3,6 @@ import java.util.*
 
 public class Knapsack(val capacity: Int, val items: Array<Int>, val weight: Array<Int>, var mutationCount: Int) {
     val sumCost: Int = items.sum()
-    val sumWeight: Int = weight.sum()
 
     init {
         if (items.size != weight.size) throw IllegalArgumentException()
@@ -25,6 +24,11 @@ public class Knapsack(val capacity: Int, val items: Array<Int>, val weight: Arra
                 val index = random.nextInt(items.size - 1)
                 generation[index] = mutation(generation[index])
             }
+            if (averageFunc(generation) <= generationAvg) {
+                val random = Random()
+                val index = random.nextInt(items.size - 1)
+                generation[index] = randomSingle()
+            }
 
             val bestThisGeneration = generation.maxBy { estimateFunc(it) } ?: generation[0]
             bestSingle = if (estimateFunc(bestThisGeneration) > bestEst) bestThisGeneration else bestSingle
@@ -39,8 +43,9 @@ public class Knapsack(val capacity: Int, val items: Array<Int>, val weight: Arra
     fun estimateFunc(single: Array<Boolean>): Double {
         val weight = single.mapIndexed { index, b -> if (b) this.weight[index] else 0 }.sum()
         val cost = single.mapIndexed { index, b -> if (b) this.items[index] else 0 }.sum()
-        return (1.0 - if (weight > capacity) 1.0 else (capacity - weight).toDouble() / capacity) * (cost.toDouble() / sumCost)
+        return (if (weight <= capacity) 1 else 0) * (cost.toDouble() / sumCost)
     }
+
     fun averageFunc(generation: Array<Array<Boolean>>): Double = generation.sumByDouble { estimateFunc(it) } / items.size
     fun firstGeneration(): Array<Array<Boolean>> {
         val generation = Array(items.size, { _ -> Array(items.size, {false})})
@@ -81,6 +86,7 @@ public class Knapsack(val capacity: Int, val items: Array<Int>, val weight: Arra
         mutationCount--
         return mutant
     }
+    fun randomSingle() : Array<Boolean> = Array(items.size, {_ -> val r = Random(); r.nextBoolean()})
 
     private fun factorialCount(more: Int): Int {
         var prev = 0
